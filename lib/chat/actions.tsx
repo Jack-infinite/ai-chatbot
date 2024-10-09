@@ -35,6 +35,7 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
+import { generateText } from 'ai'
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
@@ -106,11 +107,28 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string) {
+async function submitUserMessage(content: string, toJson: boolean = false) {
   'use server'
 
-  const aiState = getMutableAIState<typeof AI>()
+  if (toJson) {
+    console.log('content: ', content)
 
+    const { text } = await generateText({
+      model: openai('gpt-4-turbo'),
+      system:
+        'You are json converter chatbot, you can convert text to json and help users with json related queries',
+      prompt: `Convert the following text to JSON format, ensuring that all field names are lowercase and any spaces are replaced by underscores: ${content}`
+    })
+    console.log('jsooon: ', text)
+    return {
+      id: nanoid(),
+      display: text,
+      content,
+      role: 'user'
+    }
+  }
+
+  const aiState = getMutableAIState<typeof AI>()
   aiState.update({
     ...aiState.get(),
     messages: [
@@ -122,28 +140,29 @@ async function submitUserMessage(content: string) {
       }
     ]
   })
-
   let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
   let textNode: undefined | React.ReactNode
 
   const result = await streamUI({
     model: openai('gpt-3.5-turbo'),
     initial: <SpinnerMessage />,
-    system: `\
-    You are a stock trading conversation bot and you can help users buy stocks, step by step.
-    You and the user can discuss stock prices and the user can adjust the amount of stocks they want to buy, or place an order, in the UI.
-    
-    Messages inside [] means that it's a UI element or a user event. For example:
-    - "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
-    - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
-    
-    If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
-    If the user just wants the price, call \`show_stock_price\` to show the price.
-    If you want to show trending stocks, call \`list_stocks\`.
-    If you want to show events, call \`get_events\`.
-    If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
-    
-    Besides that, you can also chat with users and do some calculations if needed.`,
+    system:
+      'You are a question-answer chatbot designed to assist users with analytics queries, guiding them step by step. You and the user can discuss the data, and the user can adjust the amount of data they wish to analyze or place an order using [UI elements]. Messages inside [ ] represent actions in the UI or user events',
+    // system: `\
+    // You are a stock trading conversation bot and you can help users buy stocks, step by step.
+    // You and the user can discuss stock prices and the user can adjust the amount of stocks they want to buy, or place an order, in the UI.
+
+    // Messages inside [] means that it's a UI element or a user event. For example:
+    // - "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
+    // - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
+
+    // If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
+    // If the user just wants the price, call \`show_stock_price\` to show the price.
+    // If you want to show trending stocks, call \`list_stocks\`.
+    // If you want to show events, call \`get_events\`.
+    // If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
+
+    // Besides that, you can also chat with users and do some calculations if needed.`,
     messages: [
       ...aiState.get().messages.map((message: any) => ({
         role: message.role,

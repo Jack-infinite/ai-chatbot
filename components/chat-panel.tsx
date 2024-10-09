@@ -51,7 +51,7 @@ export function ChatPanel({
                   index > 1 && 'hidden md:block'
                 }`}
                 onClick={async () => {
-                  setMessages(currentMessages => [
+                  setMessages(currentMess ages => [
                     ...currentMessages,
                     {
                       id: nanoid(),

@@ -3,10 +3,10 @@
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
 
-import { useActions, useUIState } from 'ai/rsc'
+import { useActions, useAIState, useUIState } from 'ai/rsc'
 
 import { UserMessage } from './stocks/message'
-import { type AI } from '@/lib/chat/actions'
+import { getUIStateFromAIState, type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
@@ -48,11 +48,21 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [messages, setMessages] = useUIState<typeof AI>()
 
+  const [aiState] = useAIState()
+
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
+
+  React.useEffect(() => {
+    const m = aiState.messages
+    if (m.length > 0) {
+      console.log('aiState: ', m[m.length - 1])
+      submitUserMessage(m[m.length - 1].content, true)
+    }
+  }, [aiState.messages])
 
   return (
     <form
