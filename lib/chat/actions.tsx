@@ -131,7 +131,7 @@ async function submitUserMessage(
     } catch (error) {
       jsonResult = { text }
     }
-    await fetch('https://backend-aichat.vercel.app/api/faq', {
+    await fetch('https://backend-aichat.onrender.com/api/faq', {
       method: 'POST',
       body: JSON.stringify({
         ...jsonResult,
