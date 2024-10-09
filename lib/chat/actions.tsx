@@ -107,22 +107,46 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
   }
 }
 
-async function submitUserMessage(content: string, toJson: boolean = false) {
+async function submitUserMessage(
+  content: string,
+  toJson: boolean = false,
+  userId?: string
+) {
   'use server'
 
   if (toJson) {
-    console.log('content: ', content)
-
     const { text } = await generateText({
       model: openai('gpt-4-turbo'),
       system:
         'You are json converter chatbot, you can convert text to json and help users with json related queries',
       prompt: `Convert the following text to JSON format, ensuring that all field names are lowercase and any spaces are replaced by underscores: ${content}`
     })
-    console.log('jsooon: ', text)
+    // Convert the text to JSON format
+    const v = text.replaceAll('```json', '').replaceAll('```', '')
+
+    let jsonResult
+
+    try {
+      jsonResult = JSON.parse(v)
+    } catch (error) {
+      jsonResult = { text }
+    }
+    await fetch('https://backend-aichat.vercel.app/api/faq', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...jsonResult,
+        user_id: userId || 'no_user'
+      }),
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+      }
+    })
+      .then(response => response.json())
+      .catch(error => console.error('Error:', error))
+
     return {
       id: nanoid(),
-      display: text,
+      display: JSON.stringify(jsonResult, null, 2), // Pretty print JSON
       content,
       role: 'user'
     }

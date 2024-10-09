@@ -17,6 +17,7 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@/lib/hooks/user-provider'
 
 const questionsText = `
 
@@ -43,6 +44,7 @@ export function PromptForm({
   setInput: (value: string) => void
 }) {
   const router = useRouter()
+  const { userId } = useUser()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
@@ -60,7 +62,7 @@ export function PromptForm({
     const m = aiState.messages
     if (m.length > 0) {
       console.log('aiState: ', m[m.length - 1])
-      submitUserMessage(m[m.length - 1].content, true)
+      submitUserMessage(m[m.length - 1].content, true, userId)
     }
   }, [aiState.messages])
 
@@ -77,7 +79,6 @@ export function PromptForm({
 
         let value = input.trim()
         setInput('')
-        // console.log('dd', messages)
 
         if (!value) return
 
@@ -86,6 +87,7 @@ export function PromptForm({
           ...currentMessages,
           {
             id: nanoid(),
+            userID: userId,
             display: <UserMessage>{value}</UserMessage>
           }
         ])
