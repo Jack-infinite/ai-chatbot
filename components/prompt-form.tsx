@@ -6,7 +6,7 @@ import Textarea from 'react-textarea-autosize'
 import { useActions, useAIState, useUIState } from 'ai/rsc'
 
 import { UserMessage } from './stocks/message'
-import { getUIStateFromAIState, type AI } from '@/lib/chat/actions'
+import { type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
@@ -43,6 +43,7 @@ export function PromptForm({
   input: string
   setInput: (value: string) => void
 }) {
+  const [answers, setAnswers] = React.useState<string>('')
   const router = useRouter()
   const { userId } = useUser()
   const { formRef, onKeyDown } = useEnterSubmit()
@@ -61,8 +62,8 @@ export function PromptForm({
   React.useEffect(() => {
     const m = aiState.messages
     if (m.length > 0) {
-      console.log('aiState: ', m[m.length - 1])
-      submitUserMessage(m[m.length - 1].content, true, userId)
+      // console.log('aiState: ', m)
+      submitUserMessage(m[m.length - 1].content, true, userId, answers)
     }
   }, [aiState.messages])
 
@@ -82,6 +83,7 @@ export function PromptForm({
 
         if (!value) return
 
+        setAnswers(value)
         // Optimistically add user message UI
         setMessages(currentMessages => [
           ...currentMessages,

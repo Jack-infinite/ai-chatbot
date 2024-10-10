@@ -37,6 +37,9 @@ import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 import { generateText } from 'ai'
 
+const firebaseURL =
+  'https://firestore.googleapis.com/v1/projects/chat-gpt-5a5dc/databases/(default)/documents/aichatbot/faq'
+
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
 
@@ -110,7 +113,8 @@ async function confirmPurchase(symbol: string, price: number, amount: number) {
 async function submitUserMessage(
   content: string,
   toJson: boolean = false,
-  userId?: string
+  userId?: string,
+  answer?: string
 ) {
   'use server'
 
@@ -134,8 +138,10 @@ async function submitUserMessage(
     await fetch('https://backend-aichat.onrender.com/api/faq', {
       method: 'POST',
       body: JSON.stringify({
-        ...jsonResult,
-        user_id: userId || 'no_user'
+        content: content,
+        answer: answer || 'no_answer',
+        user_id: userId || 'no_user',
+        ...jsonResult
       }),
       headers: {
         'Content-type': 'application/json; charset=UTF-8'
@@ -150,19 +156,6 @@ async function submitUserMessage(
       content,
       role: 'user'
     }
-  } else {
-    fetch('https://backend-aichat.vercel.app/api/faq', {
-      method: 'POST',
-      body: JSON.stringify({
-        answer: content,
-        user_id: userId || 'no_user'
-      }),
-      headers: {
-        'Content-type': 'application/json; charset=UTF-8'
-      }
-    })
-      .then(response => response.json())
-      .catch(error => console.error('Error:', error))
   }
 
   const aiState = getMutableAIState<typeof AI>()
