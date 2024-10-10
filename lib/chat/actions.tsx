@@ -150,6 +150,19 @@ async function submitUserMessage(
       content,
       role: 'user'
     }
+  } else {
+    fetch('https://backend-aichat.vercel.app/api/faq', {
+      method: 'POST',
+      body: JSON.stringify({
+        answer: content,
+        user_id: userId || 'no_user'
+      }),
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+      }
+    })
+      .then(response => response.json())
+      .catch(error => console.error('Error:', error))
   }
 
   const aiState = getMutableAIState<typeof AI>()
@@ -168,7 +181,7 @@ async function submitUserMessage(
   let textNode: undefined | React.ReactNode
 
   const result = await streamUI({
-    model: openai('gpt-3.5-turbo'),
+    model: openai('gpt-4o'),
     initial: <SpinnerMessage />,
     system:
       'You are a question-answer chatbot designed to assist users with analytics queries, guiding them step by step. You and the user can discuss the data, and the user can adjust the amount of data they wish to analyze or place an order using [UI elements]. Messages inside [ ] represent actions in the UI or user events',
