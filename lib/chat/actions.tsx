@@ -119,21 +119,22 @@ async function submitUserMessage(
   'use server'
 
   if (toJson) {
-    const { text } = await generateText({
-      model: openai('gpt-4-turbo'),
-      system:
-        'You are json converter chatbot, you can convert text to json and help users with json related queries',
-      prompt: `Convert the following text to JSON format, ensuring that all field names are lowercase and any spaces are replaced by underscores: ${content}`
-    })
-    // Convert the text to JSON format
-    const v = text.replaceAll('```json', '').replaceAll('```', '')
-
+    console.log('to json', content)
+    let txt = ''
     let jsonResult
 
     try {
+      const { text } = await generateText({
+        model: openai('gpt-4-turbo'),
+        system:
+          'You are json converter chatbot, you can convert text to json and help users with json related queries',
+        prompt: `Convert the following text to JSON format, ensuring that all field names are lowercase and any spaces are replaced by underscores: ${content}`
+      })
+      const v = text.replaceAll('```json', '').replaceAll('```', '')
       jsonResult = JSON.parse(v)
     } catch (error) {
-      jsonResult = { text }
+      console.log('error: ----- ', error)
+      jsonResult = { text: txt }
     }
     await fetch('https://backend-aichat.onrender.com/api/faq', {
       method: 'POST',
@@ -147,7 +148,10 @@ async function submitUserMessage(
         'Content-type': 'application/json; charset=UTF-8'
       }
     })
-      .then(response => response.json())
+      .then(async response => {
+        const res = await response.json()
+        console.log('res===', res)
+      })
       .catch(error => console.error('Error:', error))
 
     return {
