@@ -5,10 +5,12 @@ import { ExternalLink } from '@/components/external-link'
 // import { IconArrowRight } from '@/components/ui/icons'
 
 export function EmptyScreen() {
+  return <div />
   return (
     <div className="mx-auto max-w-2xl px-4 mb-4 ">
       <div className="flex flex-col gap-2 rounded-lg border bg-background p-8">
-        <h1 className="text-lg font-semibold mb-1">Hello 🤔</h1>
+        {/* <h1 className="text-lg font-semibold mb-1">Hey Hey 🤔</h1> */}
+        {/*
         <h3 className="text-md font-semibold">
           What is the size of your company?
           <p className="leading-normal text-muted-foreground font-normal">
@@ -32,7 +34,7 @@ export function EmptyScreen() {
             * This inquires about the specific amount or range of capital you
             are looking to raise. How much funding are you aiming for?
           </p>
-        </h3>
+        </h3> */}
 
         {/* <p className="leading-normal text-muted-foreground">
           This is an open source AI chatbot app template built with{' '}

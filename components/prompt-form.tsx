@@ -78,7 +78,7 @@ export function PromptForm({
           e.target['message']?.blur()
         }
 
-        let value = input.trim()
+        const value = input.trim()
         setInput('')
 
         if (!value) return
@@ -94,9 +94,9 @@ export function PromptForm({
           }
         ])
 
-        if (messages.length === 0) {
-          value = questionsText.replace('{answer}', value)
-        }
+        // if (messages.length === 0) {
+        //   value = questionsText.replace('{answer}', value)
+        // }
 
         // Submit and get response message
         const responseMessage = await submitUserMessage(value)
