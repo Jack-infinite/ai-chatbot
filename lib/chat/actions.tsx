@@ -139,6 +139,7 @@ async function submitUserMessage(
     await fetch('https://backend-aichat.onrender.com/api/faq', {
       method: 'POST',
       body: JSON.stringify({
+        create_at: Date.now(),
         content: content,
         answer: answer || 'no_answer',
         user_id: userId || 'no_user'
