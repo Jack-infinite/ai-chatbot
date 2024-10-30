@@ -7,9 +7,15 @@ const LOCAL_STORAGE_USER_ID = 'user_id'
 
 interface UserContext {
   userId: string
+  user: any
+  setUser: ((user: any) => void) | null
 }
 
-const UserContext = React.createContext<UserContext>({ userId: '' })
+const UserContext = React.createContext<UserContext>({
+  userId: '',
+  user: null,
+  setUser: null
+})
 
 interface UserProviderProps {
   children: React.ReactNode
@@ -17,6 +23,7 @@ interface UserProviderProps {
 
 export function UserProvider({ children }: UserProviderProps) {
   const [userId, setUserId] = React.useState('')
+  const [user, setUser] = React.useState(null)
 
   React.useEffect(() => {
     const uId = localStorage.getItem(LOCAL_STORAGE_USER_ID)
@@ -30,7 +37,9 @@ export function UserProvider({ children }: UserProviderProps) {
   }, [userId])
 
   return (
-    <UserContext.Provider value={{ userId }}>{children}</UserContext.Provider>
+    <UserContext.Provider value={{ userId, user, setUser }}>
+      {children}
+    </UserContext.Provider>
   )
 }
 
