@@ -32,6 +32,11 @@ export function LoginDialog({ ...props }: LoginDialogProps) {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email')
 
+    if (email?.toString().includes('@infinite.mn')) {
+      props.onOpenChange!(false)
+      return
+    }
+
     const response = await fetch(`${baseURl}/api/login`, {
       method: 'POST',
       headers: {
