@@ -1,4 +1,8 @@
 import 'server-only'
+import jsonData from './faq.json'
+const { GoogleGenerativeAI } = require('@google/generative-ai')
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 import {
   createAI,
@@ -136,7 +140,7 @@ async function submitUserMessage(
     //   console.log('error: ----- ', error)
     //   jsonResult = { text: txt }
     // }
-    await fetch('https://backend-aichat.onrender.com/api/faq', {
+    await fetch('https://backend-aicThat.onrender.com/api/faq', {
       method: 'POST',
       body: JSON.stringify({
         create_at: Date.now(),
@@ -177,370 +181,96 @@ async function submitUserMessage(
   let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
   let textNode: undefined | React.ReactNode
 
-  const result = await streamUI({
-    model: openai('gpt-4o'),
-    initial: <SpinnerMessage />,
+  const prompt = content || 'Does this look store-bought or homemade?'
 
-    system:
-      "You are an AI life coach who assists customers by answering their questions from an FAQ, offering comprehensive answers while maintaining a supportive and conversational tone. You aim to reassure, guide, and provide comprehensive, empathetic responses.\n\nProvide a full answer to each customer’s question and offer additional context with a life-coach perspective. Anticipate potential follow-up concerns or questions, and aim to create a complete and satisfying answer that leaves the customer informed and comfortable.\n\nIf the customer seems uncertain or if the initial question is vague, use follow-up questions that clarify their concerns or help them to think about their situation comprehensively. Help them to unlock their thoughts and guide them kindly.\n\n# Key Objectives\n\n- **Complete, Engaging Responses**: Address each question thoroughly, ensuring customers feel informed and reassured.\n- **Empathetic and Conversational Tone**: Respond as a life coach, which means offering expertise while displaying warmth, empathy, and positivity. Create a supportive conversational flow, encouraging them along the way.\n- **Anticipate and Clarify**: Predict possible follow-up concerns, leaving minimal room for confusion. Engage with clarifying questions if the user's input is vague.\n\n# Steps\n\n1. **Understand the Customer’s Question**: Carefully review the question and determine whether it can be answered directly, or if more depth or context is helpful.\n2. **Provide a Direct Answer with Empathy**: Answer the main question first, delivering empathy and certainty. Refrain from jargon and be easily understandable.\n3. **Expand the Answer Holistically**: Provide any background information, context, or value-adding commentary to ensure the customer feels well-equipped. Empower them to understand the answer in broader terms.\n4. **Engage with Gentle Inquiries**: Ask clarifying or reflective questions to keep the conversation productive. Use them to show understanding of their situation.\n5. **Preemptive Insight**: Address possible follow-up needs that you anticipate from the given question. Guide the customer beyond what they directly asked.\n\n# Output Format\n\n- **Direct Answer**: Initially provide a concise answer, formulated with warmth and understanding.\n- **Expanded Response**: Elaborate on the answer from a wider perspective, providing practical and emotional support.\n- **Follow-Up Question/Prompt**: Offer an additional supportive question that invites the customer to think deeper or ensures their complete understanding.\n\n# Output Example\n\n**Customer Question**: \"How do I feel more confident when speaking in public?\"\n\n**Model Response**:\n1. **Direct Answer**: To feel more confident while speaking in public, it's important to prepare well and practice beforehand. Focus on steady breathing and keeping your thoughts organized.\n2. **Expanded Response**: Confidence grows over time, and every public speaking experience you have will get easier. Imagine how successful the outcome will be; visualization can be very powerful. Try practicing in front of smaller audiences first, building up slowly. Remember, nerves are perfectly normal, and often mean you care about doing well, which is already a good thing.\n3. **Follow-Up Question**: Would you like some tips on managing stage fright, or perhaps activities that help you find your voice in a more relaxed setting?\n\n# Notes\n\n- Always use an empathetic tone to ensure the customer's comfort in opening up.\n- Avoid abrupt transitions; maintain a smooth conversational flow between the direct answer, elaboration, and follow-ups.\n- Questions to customers should make them feel understood, not interrogated.",
-    // 'Engage businesses seeking funding by asking insightful questions and providing a rating with justification for each question to support company funding analytics.\n\nFirst, gather essential information about the company to tailor the interaction to their specific needs. The interaction will help businesses understand their funding needs, explore potential investment opportunities, and evaluate their current financial positioning.\n\n- Begin by asking questions that ascertain the size of the company, the type of entity, and the size of funding they are seeking.\n- Provide a rating between 1 and 10 for each question based on the response and deliver an explanation of why that rating was given.\n- Adjust questions dynamically based on responses to ensure a meaningful and customized interaction.\n\n# Steps\n\n1. Initiate conversation by asking:\n   - "What is the size of your company?"\n   - "What type of entity are you?"\n   - "What size of funding are you seeking?"\n\n2. Analyze responses and provide a rating from 1 to 10 for each question:\n   - Justify each rating with a brief explanation considering the relevance of the response in understanding the funding requirements and growth potential.\n\n3. Adapt subsequent questions based on the responses to create a personalized dialog that addresses specific funding needs and opportunities relevant to the company.\n\n# Output Format\n\nEach response should be structured as follows:\n- **Question**: [The question that was asked]\n- **Response**: [The company\'s response]\n- **Rating**: [Number between 1 and 10]\n- **Justification**: [Explanation of the rating]\n\n# Examples\n\n**Example 1:**\n- **Question**: "What is the size of your company?"\n- **Response**: "We are a small startup with 10 employees."\n- **Rating**: 8\n- **Justification**: "A smaller team size often indicates agility and potential for rapid growth, which is attractive to certain investors."\n\n**Example 2:**\n- **Question**: "What type of entity are you?"\n- **Response**: "We are a limited liability company (LLC)."\n- **Rating**: 7\n- **Justification**: "An LLC structure provides personal asset protection while offering operational flexibility, appealing to investors focusing on liability exposure."\n\n**Example 3:**\n- **Question**: "What size of funding are you seeking?"\n- **Response**: "We aim to secure $500,000."\n- **Rating**: 5\n- **Justification**: "The funding amount is moderate and may necessitate a review of other financials to ensure alignment with growth objectives."\n\n# Notes\n\n- Adjust the complexity and depth of questions based on the initial responses for more effective engagement.\n- Be mindful of industry norms and typical expectations in providing ratings and explanations.',
-    // 'You must ask questions to get started. What is the size of your company? and What type of entity are you? and What size of funding are you seeking? ',
-    // and for each question, give a rating between 1 and 10. Additionally, explain why you gave that rating
+  const generationConfig = {
+    temperature: 2,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+    responseMimeType: 'text/plain'
+  }
+  // console.log('jsonData: ', jsonData[0])
 
-    // "You must ask 3 questions to get started. You can ask about the stock's price, purchase, or trending stocks. You can also ask for events. You can also ask for the price of a stock or currency.",
-    // 'You are a question-answer chatbot designed to assist users with analytics queries, guiding them step by step. You and the user can discuss the data, and the user can adjust the amount of data they wish to analyze or place an order using [UI elements]. Messages inside [ ] represent actions in the UI or user events',
-    // system: `\
-    // You are a stock trading conversation bot and you can help users buy stocks, step by step.
-    // You and the user can discuss stock prices and the user can adjust the amount of stocks they want to buy, or place an order, in the UI.
-
-    // Messages inside [] means that it's a UI element or a user event. For example:
-    // - "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
-    // - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
-
-    // If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
-    // If the user just wants the price, call \`show_stock_price\` to show the price.
-    // If you want to show trending stocks, call \`list_stocks\`.
-    // If you want to show events, call \`get_events\`.
-    // If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
-
-    // Besides that, you can also chat with users and do some calculations if needed.`,
-    messages: [
-      ...aiState.get().messages.map((message: any) => ({
-        role: message.role,
-        content: message.content,
-        name: message.name
-      }))
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          ...jsonData,
+          ...aiState.get().messages.map((message: any) => ({
+            text: `${message.role === 'assistant' ? 'output' : 'input'}: ${message.content}`
+          }))
+          // {
+          //   text: `input: ${content}`
+          // }
+        ]
+      }
     ],
-    text: ({ content, done, delta }) => {
-      if (!textStream) {
-        textStream = createStreamableValue('')
-        textNode = <BotMessage content={textStream.value} />
-      }
-
-      if (done) {
-        textStream.done()
-        aiState.done({
-          ...aiState.get(),
-          messages: [
-            ...aiState.get().messages,
-            {
-              id: nanoid(),
-              role: 'assistant',
-              content
-            }
-          ]
-        })
-      } else {
-        textStream.update(delta)
-      }
-
-      return textNode
-    }
-    // tools: {
-    //   listStocks: {
-    //     description: 'List three imaginary stocks that are trending.',
-    //     parameters: z.object({
-    //       stocks: z.array(
-    //         z.object({
-    //           symbol: z.string().describe('The symbol of the stock'),
-    //           price: z.number().describe('The price of the stock'),
-    //           delta: z.number().describe('The change in price of the stock')
-    //         })
-    //       )
-    //     }),
-    //     generate: async function* ({ stocks }) {
-    //       yield (
-    //         <BotCard>
-    //           <StocksSkeleton />
-    //         </BotCard>
-    //       )
-
-    //       await sleep(1000)
-
-    //       const toolCallId = nanoid()
-
-    //       aiState.done({
-    //         ...aiState.get(),
-    //         messages: [
-    //           ...aiState.get().messages,
-    //           {
-    //             id: nanoid(),
-    //             role: 'assistant',
-    //             content: [
-    //               {
-    //                 type: 'tool-call',
-    //                 toolName: 'listStocks',
-    //                 toolCallId,
-    //                 args: { stocks }
-    //               }
-    //             ]
-    //           },
-    //           {
-    //             id: nanoid(),
-    //             role: 'tool',
-    //             content: [
-    //               {
-    //                 type: 'tool-result',
-    //                 toolName: 'listStocks',
-    //                 toolCallId,
-    //                 result: stocks
-    //               }
-    //             ]
-    //           }
-    //         ]
-    //       })
-
-    //       return (
-    //         <BotCard>
-    //           <Stocks props={stocks} />
-    //         </BotCard>
-    //       )
-    //     }
-    //   },
-    //   showStockPrice: {
-    //     description:
-    //       'Get the current stock price of a given stock or currency. Use this to show the price to the user.',
-    //     parameters: z.object({
-    //       symbol: z
-    //         .string()
-    //         .describe(
-    //           'The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD.'
-    //         ),
-    //       price: z.number().describe('The price of the stock.'),
-    //       delta: z.number().describe('The change in price of the stock')
-    //     }),
-    //     generate: async function* ({ symbol, price, delta }) {
-    //       yield (
-    //         <BotCard>
-    //           <StockSkeleton />
-    //         </BotCard>
-    //       )
-
-    //       await sleep(1000)
-
-    //       const toolCallId = nanoid()
-
-    //       aiState.done({
-    //         ...aiState.get(),
-    //         messages: [
-    //           ...aiState.get().messages,
-    //           {
-    //             id: nanoid(),
-    //             role: 'assistant',
-    //             content: [
-    //               {
-    //                 type: 'tool-call',
-    //                 toolName: 'showStockPrice',
-    //                 toolCallId,
-    //                 args: { symbol, price, delta }
-    //               }
-    //             ]
-    //           },
-    //           {
-    //             id: nanoid(),
-    //             role: 'tool',
-    //             content: [
-    //               {
-    //                 type: 'tool-result',
-    //                 toolName: 'showStockPrice',
-    //                 toolCallId,
-    //                 result: { symbol, price, delta }
-    //               }
-    //             ]
-    //           }
-    //         ]
-    //       })
-
-    //       return (
-    //         <BotCard>
-    //           <Stock props={{ symbol, price, delta }} />
-    //         </BotCard>
-    //       )
-    //     }
-    //   },
-    //   showStockPurchase: {
-    //     description:
-    //       'Show price and the UI to purchase a stock or currency. Use this if the user wants to purchase a stock or currency.',
-    //     parameters: z.object({
-    //       symbol: z
-    //         .string()
-    //         .describe(
-    //           'The name or symbol of the stock or currency. e.g. DOGE/AAPL/USD.'
-    //         ),
-    //       price: z.number().describe('The price of the stock.'),
-    //       numberOfShares: z
-    //         .number()
-    //         .optional()
-    //         .describe(
-    //           'The **number of shares** for a stock or currency to purchase. Can be optional if the user did not specify it.'
-    //         )
-    //     }),
-    //     generate: async function* ({ symbol, price, numberOfShares = 100 }) {
-    //       const toolCallId = nanoid()
-
-    //       if (numberOfShares <= 0 || numberOfShares > 1000) {
-    //         aiState.done({
-    //           ...aiState.get(),
-    //           messages: [
-    //             ...aiState.get().messages,
-    //             {
-    //               id: nanoid(),
-    //               role: 'assistant',
-    //               content: [
-    //                 {
-    //                   type: 'tool-call',
-    //                   toolName: 'showStockPurchase',
-    //                   toolCallId,
-    //                   args: { symbol, price, numberOfShares }
-    //                 }
-    //               ]
-    //             },
-    //             {
-    //               id: nanoid(),
-    //               role: 'tool',
-    //               content: [
-    //                 {
-    //                   type: 'tool-result',
-    //                   toolName: 'showStockPurchase',
-    //                   toolCallId,
-    //                   result: {
-    //                     symbol,
-    //                     price,
-    //                     numberOfShares,
-    //                     status: 'expired'
-    //                   }
-    //                 }
-    //               ]
-    //             },
-    //             {
-    //               id: nanoid(),
-    //               role: 'system',
-    //               content: `[User has selected an invalid amount]`
-    //             }
-    //           ]
-    //         })
-
-    //         return <BotMessage content={'Invalid amount'} />
-    //       } else {
-    //         aiState.done({
-    //           ...aiState.get(),
-    //           messages: [
-    //             ...aiState.get().messages,
-    //             {
-    //               id: nanoid(),
-    //               role: 'assistant',
-    //               content: [
-    //                 {
-    //                   type: 'tool-call',
-    //                   toolName: 'showStockPurchase',
-    //                   toolCallId,
-    //                   args: { symbol, price, numberOfShares }
-    //                 }
-    //               ]
-    //             },
-    //             {
-    //               id: nanoid(),
-    //               role: 'tool',
-    //               content: [
-    //                 {
-    //                   type: 'tool-result',
-    //                   toolName: 'showStockPurchase',
-    //                   toolCallId,
-    //                   result: {
-    //                     symbol,
-    //                     price,
-    //                     numberOfShares
-    //                   }
-    //                 }
-    //               ]
-    //             }
-    //           ]
-    //         })
-
-    //         return (
-    //           <BotCard>
-    //             <Purchase
-    //               props={{
-    //                 numberOfShares,
-    //                 symbol,
-    //                 price: +price,
-    //                 status: 'requires_action'
-    //               }}
-    //             />
-    //           </BotCard>
-    //         )
-    //       }
-    //     }
-    //   },
-    //   getEvents: {
-    //     description:
-    //       'List funny imaginary events between user highlighted dates that describe stock activity.',
-    //     parameters: z.object({
-    //       events: z.array(
-    //         z.object({
-    //           date: z
-    //             .string()
-    //             .describe('The date of the event, in ISO-8601 format'),
-    //           headline: z.string().describe('The headline of the event'),
-    //           description: z.string().describe('The description of the event')
-    //         })
-    //       )
-    //     }),
-    //     generate: async function* ({ events }) {
-    //       yield (
-    //         <BotCard>
-    //           <EventsSkeleton />
-    //         </BotCard>
-    //       )
-
-    //       await sleep(1000)
-
-    //       const toolCallId = nanoid()
-
-    //       aiState.done({
-    //         ...aiState.get(),
-    //         messages: [
-    //           ...aiState.get().messages,
-    //           {
-    //             id: nanoid(),
-    //             role: 'assistant',
-    //             content: [
-    //               {
-    //                 type: 'tool-call',
-    //                 toolName: 'getEvents',
-    //                 toolCallId,
-    //                 args: { events }
-    //               }
-    //             ]
-    //           },
-    //           {
-    //             id: nanoid(),
-    //             role: 'tool',
-    //             content: [
-    //               {
-    //                 type: 'tool-result',
-    //                 toolName: 'getEvents',
-    //                 toolCallId,
-    //                 result: events
-    //               }
-    //             ]
-    //           }
-    //         ]
-    //       })
-
-    //       return (
-    //         <BotCard>
-    //           <Events props={events} />
-    //         </BotCard>
-    //       )
-    //     }
-    //   }
-    // }
+    generationConfig
   })
+  aiState.done({
+    ...aiState.get(),
+    messages: [
+      ...aiState.get().messages,
+      {
+        id: nanoid(),
+        role: 'assistant',
+        content: result.response.text()
+      }
+    ]
+  })
+
+  // const result = await model.generateContent([prompt])
+
+  // const result = await model.generateContent([prompt])
+
+  // const result = await streamUI({
+  //   model: openai('gpt-4o'),
+  //   initial: <SpinnerMessage />,
+
+  //   system:
+  //     "You are an AI life coach who assists customers by answering their questions from an FAQ, offering comprehensive answers while maintaining a supportive and conversational tone. You aim to reassure, guide, and provide comprehensive, empathetic responses.\n\nProvide a full answer to each customer’s question and offer additional context with a life-coach perspective. Anticipate potential follow-up concerns or questions, and aim to create a complete and satisfying answer that leaves the customer informed and comfortable.\n\nIf the customer seems uncertain or if the initial question is vague, use follow-up questions that clarify their concerns or help them to think about their situation comprehensively. Help them to unlock their thoughts and guide them kindly.\n\n# Key Objectives\n\n- **Complete, Engaging Responses**: Address each question thoroughly, ensuring customers feel informed and reassured.\n- **Empathetic and Conversational Tone**: Respond as a life coach, which means offering expertise while displaying warmth, empathy, and positivity. Create a supportive conversational flow, encouraging them along the way.\n- **Anticipate and Clarify**: Predict possible follow-up concerns, leaving minimal room for confusion. Engage with clarifying questions if the user's input is vague.\n\n# Steps\n\n1. **Understand the Customer’s Question**: Carefully review the question and determine whether it can be answered directly, or if more depth or context is helpful.\n2. **Provide a Direct Answer with Empathy**: Answer the main question first, delivering empathy and certainty. Refrain from jargon and be easily understandable.\n3. **Expand the Answer Holistically**: Provide any background information, context, or value-adding commentary to ensure the customer feels well-equipped. Empower them to understand the answer in broader terms.\n4. **Engage with Gentle Inquiries**: Ask clarifying or reflective questions to keep the conversation productive. Use them to show understanding of their situation.\n5. **Preemptive Insight**: Address possible follow-up needs that you anticipate from the given question. Guide the customer beyond what they directly asked.\n\n# Output Format\n\n- **Direct Answer**: Initially provide a concise answer, formulated with warmth and understanding.\n- **Expanded Response**: Elaborate on the answer from a wider perspective, providing practical and emotional support.\n- **Follow-Up Question/Prompt**: Offer an additional supportive question that invites the customer to think deeper or ensures their complete understanding.\n\n# Output Example\n\n**Customer Question**: \"How do I feel more confident when speaking in public?\"\n\n**Model Response**:\n1. **Direct Answer**: To feel more confident while speaking in public, it's important to prepare well and practice beforehand. Focus on steady breathing and keeping your thoughts organized.\n2. **Expanded Response**: Confidence grows over time, and every public speaking experience you have will get easier. Imagine how successful the outcome will be; visualization can be very powerful. Try practicing in front of smaller audiences first, building up slowly. Remember, nerves are perfectly normal, and often mean you care about doing well, which is already a good thing.\n3. **Follow-Up Question**: Would you like some tips on managing stage fright, or perhaps activities that help you find your voice in a more relaxed setting?\n\n# Notes\n\n- Always use an empathetic tone to ensure the customer's comfort in opening up.\n- Avoid abrupt transitions; maintain a smooth conversational flow between the direct answer, elaboration, and follow-ups.\n- Questions to customers should make them feel understood, not interrogated.",
+  //   // 'You must ask questions to get started. What is the size of your company? and What type of entity are you? and What size of funding are you seeking? ',
+  //   messages: [
+  //     ...aiState.get().messages.map((message: any) => ({
+  //       role: message.role,
+  //       content: message.content,
+  //       name: message.name
+  //     }))
+  //   ],
+  //   text: ({ content, done, delta }) => {
+  //     if (!textStream) {
+  //       textStream = createStreamableValue('')
+  //       textNode = <BotMessage content={textStream.value} />
+  //     }
+
+  //     if (done) {
+  //       textStream.done()
+  //       aiState.done({
+  //         ...aiState.get(),
+  //         messages: [
+  //           ...aiState.get().messages,
+  //           {
+  //             id: nanoid(),
+  //             role: 'assistant',
+  //             content
+  //           }
+  //         ]
+  //       })
+  //     } else {
+  //       textStream.update(delta)
+  //     }
+
+  //     return textNode
+  //   }
+  // })
+  textNode = <p style={{ whiteSpace: 'pre-line' }}>{result.response.text()}</p>
 
   return {
     id: nanoid(),
-    display: result.value
+    display: textNode
   }
 }
 
